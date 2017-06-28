@@ -1,0 +1,24 @@
+mr-jobhistory-daemon.sh start historyserver
+
+pig
+
+--LOAD FROM HBASE
+
+data = LOAD 'hbase://customer' USING org.apache.pig.backend.hadoop.hbase.HBaseStorage('details:*',  '-loadKey true') 
+as (id:CHARARRAY, details:MAP[]);
+DUMP data;
+
+result = FOREACH data GENERATE id, details#'name'
+DUMP result;
+
+--STORE INTO HBASE
+--CREATE HBase Table before below query
+--create 'bulk_pig', 'cf1'
+
+T = LOAD '/home/acadgild/hbase/bulk_data.tsv' AS (customerid, name, age,location);
+
+STORE T INTO 'bulk_pig' USING org.apache.pig.backend.hadoop.hbase.HBaseStorage('cf1:customerid,cf1:name,cf1:age,cf1:location');
+
+--Reading data without schema
+data = LOAD 'hbase://bulk_pig' USING org.apache.pig.backend.hadoop.hbase.HBaseStorage('cf1:*');
+DUMP data;
